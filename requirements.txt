@@ -1,0 +1,10 @@
+# Core
+pyspark==3.5.0
+
+# Spark Connection & Performance
+pyarrow=>1.48.0
+grpcio-status=>1.48.0
+grpcio=>4.0.0
+
+# Data Analysis
+pandas=>1.2.0
