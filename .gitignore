@@ -5,3 +5,10 @@ lib/
 lib64
 share/
 pyvenv.cfg
+__pycache__/
+
+# elastic
+elastic-start-local/
+
+# data
+data/
