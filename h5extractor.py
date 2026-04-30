@@ -2,6 +2,7 @@ import uuid
 import h5py
 from datetime import datetime
 import numpy as np
+from pyspark.sql.types import *
 
 class H5Extractor:
     def __init__(self, measurement_id, filepath):
@@ -16,6 +17,8 @@ class H5Extractor:
 
     # this ensure to call instance of this class like this: f(name, node)
     def __call__(self, name, node):
+        clean_name = name.replace('/', '_').replace('.', '_').replace(' ', '_')
+
         if isinstance(node, h5py.Dataset):
             if node.shape == () or node.size < 100: # its a scalar obj or small array
                 value = node[()]
@@ -40,11 +43,11 @@ class H5Extractor:
                         for v in value
                     ]
                 
-                self.metadata_db[name] = value
+                self.metadata_db[clean_name] = value
                 
             elif len(node.shape) >= 2 or node.size >= 100:
                 flattened = node[:].flatten().tolist()
-                self.parquet_payload[name] = [flattened]
+                self.parquet_payload[clean_name] = [flattened]
                 
         elif isinstance(node, h5py.Group):
             pass
@@ -62,6 +65,34 @@ def process_single_h5(filepath):
         f.visititems(extractor)
         
     return (extractor.metadata_db, extractor.parquet_payload)
+
+def map_type_to_spark_type(value):
+    """Maps a Python/NumPy value to a PySpark DataType."""
+
+    # Booleans (it is important to check for bool first)
+    if isinstance(value, (bool, np.bool_)):
+        return BooleanType()
+    # Integers
+    elif isinstance(value, (int, np.integer)):
+        return IntegerType()
+    # Floats
+    elif isinstance(value, (float, np.floating)):
+        return DoubleType()
+    # Strings and Byte-strings (common in HDF5)
+    elif isinstance(value, (str, bytes, np.bytes_, np.str_)):
+        return StringType()
+    # Arrays/Lists
+    elif isinstance(value, (list, np.ndarray)):
+        if len(value) > 0:
+            # Recursively check the first element to type the array
+            element_type = map_type_to_spark_type(value[0])
+        else:
+            # Fallback for empty arrays
+            element_type = StringType() 
+        return ArrayType(element_type)
+    # fallback
+    else:
+        return StringType()
 
 
 if __name__ == "__main__":
