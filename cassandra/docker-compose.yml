@@ -1,0 +1,15 @@
+services:
+  cassandra:
+    image: cassandra:latest
+    container_name: cassandra-node
+    ports:
+      - "9042:9042"  # Důležité pro Spark (Native transport port)
+    environment:
+      - CASSANDRA_CLUSTER_NAME=TestCluster
+      - CASSANDRA_DC=DC1
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+    volumes:
+      - cassandra_data:/var/lib/cassandra
+
+volumes:
+  cassandra_data:

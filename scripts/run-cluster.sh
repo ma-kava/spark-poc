@@ -10,7 +10,7 @@ echo
 sleep 2
 
 echo "=== starting connect server ==="
-$SPARK_SBIN/start-connect-server.sh
+$SPARK_SBIN/start-connect-server.sh --packages org.postgresql:postgresql:42.7.11
 echo
 sleep 2
 
